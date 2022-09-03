@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import logging.config
 import os
@@ -85,7 +86,8 @@ def get_times_turn_on_off_light() -> Dict[str, str]:
     url = 'https://api.sunrise-sunset.org/json'
     data = {
         'lat': LATITUDE,
-        'lng': LONGITUDE
+        'lng': LONGITUDE,
+        'date': datetime.now().date().strftime('%Y-%m-%d')
     }
 
     response = requests.get(url, data)
@@ -152,6 +154,27 @@ def check_env_variable() -> bool:
     return all([XZONTTOKEN, XZONTCLIENT, TIMEZONE, LATITUDE, LONGITUDE])
 
 
+def get_date_period(date: str) -> str:
+    """Принимает номер дня месяца и возвращает период дней из графика"""
+    date = int(date)
+    for date_period in DATE_PERIODS:
+        period = date_period.split('-')
+        if date in [d for d in range(int(period[0]), int(period[1]) + 1)]:
+            return date_period
+
+
+def check_time_in_lighting_schedule(
+        lighting_schedule: Dict, month: str, date_period: str) -> bool:
+    """
+    Проверяет есть ли данные о включении и выключении освещения
+    в нужный период
+    """
+    try:
+        return bool(lighting_schedule[month][date_period])
+    except KeyError:
+        return False
+
+
 def main():
     if check_env_variable():
         _logger.debug('Переменные окружения доступны')
@@ -160,9 +183,75 @@ def main():
         _logger.error(error)
         raise ENVError(error)
 
+    time_zero_obj = datetime.strptime('00:00', '%H:%M')
+    time_max_obj = datetime.strptime('23:59', '%H:%M')
+    flag_light_on = False
+
+    lighting_schedule = read_lighting_schedule()
+    date_start = datetime.now()
+    _logger.info(f'{date_start=}')
+    month_start = date_start.strftime('%B')
+    _logger.info(f'{month_start=}')
+    period_start = get_date_period(date_start.strftime('%d'))
+    _logger.info(f'{period_start=}')
+    if not check_time_in_lighting_schedule(
+            lighting_schedule, month_start, period_start
+    ):
+        times_turn_on_off_light = get_times_turn_on_off_light()
+        write_lighting_schedule(
+            month_start, period_start, times_turn_on_off_light
+        )
+        lighting_schedule = read_lighting_schedule()
+    else:
+        times_turn_on_off_light = lighting_schedule[month_start][period_start]
+
+    _logger.info(f'Время включения и выключения '
+                 f'освешения: {times_turn_on_off_light}')
+    # print(get_date_period('25'))
+    # print(check_time_in_lighting_schedule(lighting_schedule, 'January', '6-10'))
+
     while True:
         try:
-            pass
+            date_now = datetime.now()
+            _logger.info(f'{date_now=}')
+            time_now = date_now.strftime('%H:%M')
+            _logger.info(f'{time_now=}')
+            month_now = date_now.strftime('%B')
+            _logger.info(f'{month_now=}')
+            period_now = get_date_period(date_now.strftime('%d'))
+            _logger.info(f'{period_now=}')
+
+            if period_start != period_now:
+                if not check_time_in_lighting_schedule(
+                        lighting_schedule, month_now, period_now
+                ):
+                    times_turn_on_off_light = get_times_turn_on_off_light()
+                    write_lighting_schedule(
+                        month_now, period_now, times_turn_on_off_light
+                    )
+                    lighting_schedule = read_lighting_schedule()
+                else:
+                    times_turn_on_off_light = lighting_schedule[month_start][
+                        period_start]
+                _logger.info(f'Время включения и выключения '
+                             f'освешения: {times_turn_on_off_light}')
+
+            time_now_obj = datetime.strptime(time_now, '%H:%M')
+            time_light_on_obj = datetime.strptime(
+                times_turn_on_off_light['light_on'], '%H:%M'
+            )
+            time_light_off_obj = datetime.strptime(
+                times_turn_on_off_light['light_off'], '%H:%M'
+            )
+
+            if ((time_max_obj >= time_now_obj >= time_light_on_obj) or (
+                time_zero_obj <= time_now_obj < time_light_off_obj)) and (
+                    not flag_light_on):
+                _logger.debug(f'ОСВЕЩЕНИЕ ВКЛЮЧЕНО!!!!!')
+                flag_light_on = True
+
+            # if :
+            #     _logger.debug(f'ОСВЕЩЕНИЕ ВЫКЛЮЧЕНО!!!!!')
 
         except ValueHoursError:
             _logger.error(f'Прибавляемые(Вычитаемые) часы должны '
@@ -186,4 +275,4 @@ def main():
 
 
 if __name__ == '__main__':
-    print(get_times_turn_on_off_light())
+    main()
