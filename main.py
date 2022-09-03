@@ -15,6 +15,7 @@ from exceptions import (
     ValueHoursError, ENVError
 )
 
+# Все вот это до функций я бы выкинул в отдельный модуль. 
 load_dotenv()
 
 logging.config.dictConfig(LOGGER_CONFIG)
@@ -30,6 +31,7 @@ TIMEZONE = os.getenv('TIMEZONE')
 LATITUDE = os.getenv('LATITUDE')
 LONGITUDE = os.getenv('LONGITUDE')
 
+# вот до сюда
 
 def sum_hours(hours: str, hours_sum: str) -> str:
     """Складывает часы в формате 23:00"""
@@ -53,9 +55,9 @@ def subtracting_hours(hours: str, hours_tz: str) -> str:
 
 def corrects_time_by_time_zone(time_utc: str) -> str:
     """Корректирует время по заданной временной зоне"""
-    arithmetic_symbol = TIMEZONE[0]
+    arithmetic_symbol = TIMEZONE[0]  #нечитаемо тут и везде. ЧТо она значит? Используй свой класс, Enum или NamedTuple
     time_list = time_utc.split(':')
-    if arithmetic_symbol == '+':
+    if arithmetic_symbol == '+':  # Всю эту мешанину условий можно завернуть в класс и использовать gettattr
         time = ':'.join(
             [sum_hours(time_list[0], TIMEZONE[1:]), time_list[1]]
         )
@@ -70,6 +72,10 @@ def corrects_time_by_time_zone(time_utc: str) -> str:
 
 def format_time(time: str) -> str:
     """Форматирует строку времени из вида <4:19:34 PM> в <16:19>"""
+
+    # Уверен, что все это дело умеет делать какой-нибудь datetime.datetime.strptime. 
+    # Можно сильно проще, а главное оно уже покрыто тестами
+
     time_value, pm_am = time.split()
     _logger.debug(f'{time_value=}, {pm_am=}')
     hours, minutes, seconds = time_value.split(':')
@@ -108,6 +114,10 @@ def get_times_turn_on_off_light() -> Dict[str, str]:
     twilight_end = response.json()['results']['civil_twilight_end']
     _logger.debug(f'{twilight_begin=}, {twilight_end=}')
 
+
+    # А! Я понял! Что за функции сверху :) Это из UTC в нужный часовой пояс? 
+    # Уверен, что в datetime найдется нужный инсрумент, чем самописаные функции
+
     time_light_on = corrects_time_by_time_zone(format_time(twilight_end))
     time_light_off = corrects_time_by_time_zone(format_time(twilight_begin))
 
@@ -124,6 +134,11 @@ def read_lighting_schedule() -> Dict[str, Dict]:
     Считывает расписание восхода и заката солнца из файла,
     и возвращает словарь.
     """
+
+    # Если это домашний код, то сойдет. Если пойдет в продакшн, 
+    # то нужно еще ченуть json на корректность потом
+
+
     try:
         with open('data/lighting_schedule.json', 'r', encoding='utf-8') as f:
             lighting_schedule = json.load(f)
@@ -159,7 +174,10 @@ def get_date_period(date: str) -> str:
     date = int(date)
     for date_period in DATE_PERIODS:
         period = date_period.split('-')
-        if date in [d for d in range(int(period[0]), int(period[1]) + 1)]:
+
+        # В условии напрашивается использование более читаемой структуры данных, 
+        # типа своего класса, NamedTuple (или его наследника). 
+        if date in [d for d in range(int(period[0]), int(period[1]) + 1)]:  # if date in range(int(period[0]), int(period[1]) + 1):... Но я бы подумал над изменением DATE_PERIODS. И эта функция вся изменится тогда
             return date_period
 
 
@@ -194,6 +212,9 @@ def main():
     _logger.info(f'{month_start=}')
     period_start = get_date_period(date_start.strftime('%d'))
     _logger.info(f'{period_start=}')
+
+    # это точно должна быть отдельная функция
+
     if not check_time_in_lighting_schedule(
             lighting_schedule, month_start, period_start
     ):
@@ -243,6 +264,11 @@ def main():
             time_light_off_obj = datetime.strptime(
                 times_turn_on_off_light['light_off'], '%H:%M'
             )
+
+            # Вот эти условия жирные надо убрать в функцию is_time_in_interval(time, start_interval_time, end_interval_time) и чекать.
+            # Плюс у питона есть ленивые вычисления и проверка на флаг, кмк, приоритетнее. Я бы ее сунул первой, а не последней.
+            # А то тут аж мозг напрягся, что происходит :)
+            # Плюс тоже убрал бы в отдельную функцию. Main стоид разгрузить. В вызывающем коде сидит куча логики приложения. 
 
             if ((time_max_obj >= time_now_obj >= time_light_on_obj) or (
                 time_zero_obj <= time_now_obj < time_light_off_obj)) and (
