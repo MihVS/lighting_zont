@@ -250,8 +250,11 @@ def main():
                 _logger.debug(f'ОСВЕЩЕНИЕ ВКЛЮЧЕНО!!!!!')
                 flag_light_on = True
 
-            # if :
-            #     _logger.debug(f'ОСВЕЩЕНИЕ ВЫКЛЮЧЕНО!!!!!')
+            if (time_light_off_obj < time_now_obj > time_light_on_obj) and (
+                flag_light_on
+            ):
+                _logger.debug(f'ОСВЕЩЕНИЕ ВЫКЛЮЧЕНО!!!!!')
+                flag_light_on = False
 
         except ValueHoursError:
             _logger.error(f'Прибавляемые(Вычитаемые) часы должны '
