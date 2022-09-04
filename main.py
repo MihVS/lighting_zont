@@ -220,6 +220,26 @@ def main():
             period_now = get_date_period(date_now.strftime('%d'))
             _logger.debug(f'{period_now=}')
 
+            time_now_obj = datetime.strptime(time_now, '%H:%M')
+            time_light_on_obj = datetime.strptime(
+                times_turn_on_off_light['light_on'], '%H:%M'
+            )
+            time_light_off_obj = datetime.strptime(
+                times_turn_on_off_light['light_off'], '%H:%M'
+            )
+
+            if ((time_max_obj >= time_now_obj >= time_light_on_obj) or (
+                    time_zero_obj <= time_now_obj < time_light_off_obj)) and (
+                    not flag_light_on):
+                _logger.warning(f'ОСВЕЩЕНИЕ ВКЛЮЧЕНО!!!!!')
+                flag_light_on = True
+
+            if (time_light_off_obj <= time_now_obj < time_light_on_obj) and (
+                    flag_light_on
+            ):
+                _logger.warning(f'ОСВЕЩЕНИЕ ВЫКЛЮЧЕНО!!!!!')
+                flag_light_on = False
+
             if period_start != period_now:
                 if not check_time_in_lighting_schedule(
                         lighting_schedule, month_now, period_now
@@ -234,26 +254,6 @@ def main():
                         period_start]
                 _logger.info(f'Время включения и выключения '
                              f'освешения: {times_turn_on_off_light}')
-
-            time_now_obj = datetime.strptime(time_now, '%H:%M')
-            time_light_on_obj = datetime.strptime(
-                times_turn_on_off_light['light_on'], '%H:%M'
-            )
-            time_light_off_obj = datetime.strptime(
-                times_turn_on_off_light['light_off'], '%H:%M'
-            )
-
-            if ((time_max_obj >= time_now_obj >= time_light_on_obj) or (
-                time_zero_obj <= time_now_obj < time_light_off_obj)) and (
-                    not flag_light_on):
-                _logger.warning(f'ОСВЕЩЕНИЕ ВКЛЮЧЕНО!!!!!')
-                flag_light_on = True
-
-            if (time_light_off_obj <= time_now_obj < time_light_on_obj) and (
-                flag_light_on
-            ):
-                _logger.warning(f'ОСВЕЩЕНИЕ ВЫКЛЮЧЕНО!!!!!')
-                flag_light_on = False
 
         except ValueHoursError:
             _logger.error(f'Прибавляемые(Вычитаемые) часы должны '
