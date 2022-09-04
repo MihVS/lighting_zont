@@ -176,7 +176,7 @@ def check_time_in_lighting_schedule(
 
 
 def main():
-    _logger.info('STARTED')
+    _logger.warning('STARTED')
     if check_env_variable():
         _logger.info('Переменные окружения загружены')
     else:
