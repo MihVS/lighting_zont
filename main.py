@@ -21,7 +21,7 @@ logging.config.dictConfig(LOGGER_CONFIG)
 _logger = logging.getLogger('script_logger')
 
 
-RETRY_TIME = 60
+RETRY_TIME = 10
 DATE_PERIODS = ('1-5', '6-10', '11-15', '16-20', '21-25', '25-31')
 CONTENTTYPE = 'application/json'
 XZONTTOKEN = os.getenv('XZONTTOKEN')
@@ -250,8 +250,10 @@ def main():
                     )
                     lighting_schedule = read_lighting_schedule()
                 else:
-                    times_turn_on_off_light = lighting_schedule[month_start][
-                        period_start]
+                    times_turn_on_off_light = lighting_schedule[month_now][
+                        period_now]
+                period_start = period_now
+                _logger.debug(f'{period_start=}')
                 _logger.info(f'Время включения и выключения '
                              f'освешения: {times_turn_on_off_light}')
 
