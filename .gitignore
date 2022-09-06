@@ -2,6 +2,7 @@
 venv/
 .mypy_cache/
 .idea/
+__pycache__/
 
 .env
 log.log
