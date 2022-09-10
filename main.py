@@ -1,6 +1,6 @@
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Dict
 
@@ -35,26 +35,16 @@ def subtracting_hours(hours: str, hours_tz: str) -> str:
     return str(dif)
 
 
-def corrects_time_by_time_zone(time_utc: str) -> str:
-    """Корректирует время по заданной временной зоне"""
-    arithmetic_symbol = TIMEZONE[0]
-    time_list = time_utc.split(':')
-    if arithmetic_symbol == '+':
-        time = ':'.join(
-            [sum_hours(time_list[0], TIMEZONE[1:]), time_list[1]]
-        )
-    elif arithmetic_symbol == '-':
-        time = ':'.join(
-            [subtracting_hours(time_list[0], TIMEZONE[1:]), time_list[1]]
-        )
-    else:
-        raise TimeZoneFormatError('Временная зона указана не верно.')
-    return time
-
-
-def format_time(time_for_pars: str) -> str:
-    """Форматирует строку времени из вида <4:19:34 PM> в <16:19>"""
+def format_time(time_for_pars: str, time_zone: str) -> str:
+    """
+    Форматирует строку времени из вида <4:19:34 PM> в <19:19> (+3)
+    с учетом часового пояса
+    """
     time_obj = datetime.strptime(time_for_pars, '%I:%M:%S %p')
+    utc_zone = timezone(timedelta(hours=0))
+    my_zone = timezone(timedelta(hours=int(time_zone)))
+    time_obj = time_obj.replace(tzinfo=utc_zone)
+    time_obj = time_obj.astimezone(my_zone)
     return time_obj.strftime('%H:%M')
 
 
@@ -88,8 +78,8 @@ def get_times_turn_on_off_light() -> Dict[str, str]:
     twilight_end = response.json()['results']['civil_twilight_end']
     _logger.debug(f'{twilight_begin=}, {twilight_end=}')
 
-    time_light_on = corrects_time_by_time_zone(format_time(twilight_end))
-    time_light_off = corrects_time_by_time_zone(format_time(twilight_begin))
+    time_light_on = format_time(twilight_end, TIMEZONE)
+    time_light_off = format_time(twilight_begin, TIMEZONE)
 
     times_turn_on_off_light = {
         'light_on': time_light_on,
