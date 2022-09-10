@@ -7,32 +7,12 @@ from typing import Dict
 import requests
 
 from exceptions import (
-    FileReadingError, TimeZoneFormatError, RequestAPISunriseSunsetError,
-    ValueHoursError, ENVError
+    FileReadingError, RequestAPISunriseSunsetError,
+    ENVError
 )
 from settings import (
     _logger, TIMEZONE, LATITUDE, LONGITUDE, DATE_PERIODS, RETRY_TIME
 )
-
-
-def sum_hours(hours: str, hours_sum: str) -> str:
-    """Складывает часы в формате 23:00"""
-    sum = int(hours) + int(hours_sum)
-    if int(hours_sum) > 12:
-        raise ValueHoursError('Не верное значение складываемых часов')
-    if 47 > sum > 23:
-        sum -= 24
-    return str(sum)
-
-
-def subtracting_hours(hours: str, hours_tz: str) -> str:
-    """Вычитает часы в формате 23:00"""
-    dif = int(hours) - int(hours_tz)
-    if int(hours_tz) > 12:
-        raise ValueHoursError('Не верное значение вычетаемых часов')
-    elif dif < 0:
-        dif += 24
-    return str(dif)
 
 
 def format_time(time_for_pars: str, time_zone: str) -> str:
@@ -227,15 +207,8 @@ def main():
                 _logger.info(f'Время включения и выключения '
                              f'освешения: {times_turn_on_off_light}')
 
-        except ValueHoursError:
-            _logger.error(f'Прибавляемые(Вычитаемые) часы должны '
-                          f'быть не больше(меньше) 12(-12)')
-
         except RequestAPISunriseSunsetError:
             _logger.error(f'Ошибка запроса к API.')
-
-        except TimeZoneFormatError:
-            _logger.error(f'Временная зона "{TIMEZONE}" не верного формата.')
 
         except FileReadingError:
             _logger.error('Не удалось прочитать файл lighting_schedule.json')

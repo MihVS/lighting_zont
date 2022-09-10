@@ -1,12 +1,8 @@
 {
     "September": {
-        "1-5": {
-            "light_on": "19:19",
-            "light_off": "4:01"
-        },
         "6-10": {
-            "light_on": "19:10",
-            "light_off": "4:09"
+            "light_on": "18:58",
+            "light_off": "04:18"
         }
     }
 }
