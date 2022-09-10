@@ -1,34 +1,16 @@
 from datetime import datetime
 import json
-import logging.config
-import os
 import time
 from http import HTTPStatus
 from typing import Dict
 
 import requests
-from dotenv import load_dotenv
 
-from config_log import LOGGER_CONFIG
 from exceptions import (
     FileReadingError, TimeZoneFormatError, RequestAPISunriseSunsetError,
     ValueHoursError, ENVError
 )
-
-load_dotenv()
-
-logging.config.dictConfig(LOGGER_CONFIG)
-_logger = logging.getLogger('script_logger')
-
-
-RETRY_TIME = 10
-DATE_PERIODS = ('1-5', '6-10', '11-15', '16-20', '21-25', '25-31')
-CONTENTTYPE = 'application/json'
-XZONTTOKEN = os.getenv('XZONTTOKEN')
-XZONTCLIENT = os.getenv('XZONTCLIENT')
-TIMEZONE = os.getenv('TIMEZONE')
-LATITUDE = os.getenv('LATITUDE')
-LONGITUDE = os.getenv('LONGITUDE')
+from settings import _logger
 
 
 def sum_hours(hours: str, hours_sum: str) -> str:
