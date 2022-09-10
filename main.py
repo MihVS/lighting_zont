@@ -1,6 +1,6 @@
-from datetime import datetime
 import json
 import time
+from datetime import datetime
 from http import HTTPStatus
 from typing import Dict
 
@@ -10,7 +10,9 @@ from exceptions import (
     FileReadingError, TimeZoneFormatError, RequestAPISunriseSunsetError,
     ValueHoursError, ENVError
 )
-from settings import _logger
+from settings import (
+    _logger, TIMEZONE, LATITUDE, LONGITUDE, DATE_PERIODS, RETRY_TIME
+)
 
 
 def sum_hours(hours: str, hours_sum: str) -> str:
@@ -50,14 +52,10 @@ def corrects_time_by_time_zone(time_utc: str) -> str:
     return time
 
 
-def format_time(time: str) -> str:
+def format_time(time_for_pars: str) -> str:
     """Форматирует строку времени из вида <4:19:34 PM> в <16:19>"""
-    time_value, pm_am = time.split()
-    _logger.debug(f'{time_value=}, {pm_am=}')
-    hours, minutes, seconds = time_value.split(':')
-    if pm_am == 'PM':
-        hours = sum_hours(hours, '12')
-    return ':'.join([hours, minutes])
+    time_obj = datetime.strptime(time_for_pars, '%I:%M:%S %p')
+    return time_obj.strftime('%H:%M')
 
 
 def get_times_turn_on_off_light() -> Dict[str, str]:
@@ -133,7 +131,7 @@ def write_lighting_schedule(
 
 def check_env_variable() -> bool:
     """Проверяет доступность переменных окружения."""
-    return all([XZONTTOKEN, XZONTCLIENT, TIMEZONE, LATITUDE, LONGITUDE])
+    return all([TIMEZONE, LATITUDE, LONGITUDE])
 
 
 def get_date_period(date: str) -> str:
