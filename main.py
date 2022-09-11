@@ -142,6 +142,17 @@ def load_times_turn_on_off_light(
         return times_turn_on_off_light, lighting_schedule
 
 
+def is_time_in_interval(time_checked: str, start_interval_time: str,
+                        end_interval_time: str) -> bool:
+    """Проверяет вхождение времени в заданный интервал"""
+    time_checked_obj = datetime.strptime(time_checked, '%H:%M')
+    time_light_on_obj = datetime.strptime(start_interval_time, '%H:%M')
+    time_light_off_obj = datetime.strptime(end_interval_time, '%H:%M')
+    if time_light_off_obj <= time_checked_obj < time_light_on_obj:
+        return False
+    return True
+
+
 def main():
     _logger.warning('STARTED')
     if check_env_variable():
@@ -151,8 +162,6 @@ def main():
         _logger.error(error)
         raise ENVError(error)
 
-    time_zero_obj = datetime.strptime('00:00', '%H:%M')
-    time_max_obj = datetime.strptime('23:59', '%H:%M')
     flag_light_on = False
 
     lighting_schedule = read_lighting_schedule()
@@ -179,23 +188,17 @@ def main():
             period_now = get_date_period(date_now.strftime('%d'))
             _logger.debug(f'{period_now=}')
 
-            time_now_obj = datetime.strptime(time_now, '%H:%M')
-            time_light_on_obj = datetime.strptime(
-                times_turn_on_off_light['light_on'], '%H:%M'
-            )
-            time_light_off_obj = datetime.strptime(
-                times_turn_on_off_light['light_off'], '%H:%M'
-            )
-
-            if ((time_max_obj >= time_now_obj >= time_light_on_obj) or (
-                    time_zero_obj <= time_now_obj < time_light_off_obj)) and (
-                    not flag_light_on):
+            if (not flag_light_on) and is_time_in_interval(
+                time_now, times_turn_on_off_light['light_on'],
+                times_turn_on_off_light['light_off']
+            ):
                 _logger.warning(f'ОСВЕЩЕНИЕ ВКЛЮЧЕНО!!!!!')
                 flag_light_on = True
 
-            if (time_light_off_obj <= time_now_obj < time_light_on_obj) and (
-                    flag_light_on
-            ):
+            if flag_light_on and (not is_time_in_interval(
+                    time_now, times_turn_on_off_light['light_on'],
+                    times_turn_on_off_light['light_off']
+            )):
                 _logger.warning(f'ОСВЕЩЕНИЕ ВЫКЛЮЧЕНО!!!!!')
                 flag_light_on = False
 
