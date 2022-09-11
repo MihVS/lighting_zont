@@ -1,5 +1,6 @@
 import json
 import time
+from collections import namedtuple
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Dict, Tuple
@@ -164,6 +165,9 @@ def main():
 
     flag_light_on = False
 
+    LightingControlTime = namedtuple('LightingControlTime',
+                                     'light_on light_off')
+
     lighting_schedule = read_lighting_schedule()
     date_start = datetime.now()
     _logger.debug(f'{date_start=}')
@@ -173,6 +177,10 @@ def main():
     _logger.debug(f'{period_start=}')
     times_turn_on_off_light, lighting_schedule = load_times_turn_on_off_light(
         lighting_schedule, month_start, period_start
+    )
+    lighting_control_time = LightingControlTime(
+        light_on=times_turn_on_off_light['light_on'],
+        light_off=times_turn_on_off_light['light_off']
     )
     _logger.info(f'Время включения и выключения '
                  f'освещения: {times_turn_on_off_light}')
@@ -188,17 +196,15 @@ def main():
             period_now = get_date_period(date_now.strftime('%d'))
             _logger.debug(f'{period_now=}')
 
-            if (not flag_light_on) and is_time_in_interval(
-                time_now, times_turn_on_off_light['light_on'],
-                times_turn_on_off_light['light_off']
+            if not flag_light_on and is_time_in_interval(
+                time_now, *lighting_control_time
             ):
                 _logger.warning(f'ОСВЕЩЕНИЕ ВКЛЮЧЕНО!!!!!')
                 flag_light_on = True
 
-            if flag_light_on and (not is_time_in_interval(
-                    time_now, times_turn_on_off_light['light_on'],
-                    times_turn_on_off_light['light_off']
-            )):
+            if flag_light_on and not is_time_in_interval(
+                    time_now, *lighting_control_time
+            ):
                 _logger.warning(f'ОСВЕЩЕНИЕ ВЫКЛЮЧЕНО!!!!!')
                 flag_light_on = False
 
@@ -209,6 +215,10 @@ def main():
                     lighting_schedule, month_now, period_now
                 )
                 period_start = period_now
+                lighting_control_time = LightingControlTime(
+                    light_on=times_turn_on_off_light['light_on'],
+                    light_off=times_turn_on_off_light['light_off']
+                )
                 _logger.debug(f'{period_start=}')
                 _logger.info(f'Время включения и выключения '
                              f'освещения: {times_turn_on_off_light}')
