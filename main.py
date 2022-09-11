@@ -2,7 +2,7 @@ import json
 import time
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from typing import Dict
+from typing import Dict, Tuple
 
 import requests
 
@@ -125,16 +125,21 @@ def get_date_period(day: str) -> str:
     raise ValueError('День должен быть в диапазоне от 1 до 31')
 
 
-def check_time_in_lighting_schedule(
-        lighting_schedule: Dict, month: str, date_period: str) -> bool:
+def load_times_turn_on_off_light(
+        lighting_schedule: Dict, month: str, period: str) -> Tuple[Dict, Dict]:
     """
-    Проверяет есть ли данные о включении и выключении освещения
-    в нужный период
+    Получает время включения и выключения из файла,
+    если данных нет, то подгружает из интернета
     """
     try:
-        return bool(lighting_schedule[month][date_period])
+        return lighting_schedule[month][period], lighting_schedule
     except KeyError:
-        return False
+        times_turn_on_off_light = get_times_turn_on_off_light()
+        write_lighting_schedule(
+            month, period, times_turn_on_off_light
+        )
+        lighting_schedule = read_lighting_schedule()
+        return times_turn_on_off_light, lighting_schedule
 
 
 def main():
@@ -157,19 +162,11 @@ def main():
     _logger.debug(f'{month_start=}')
     period_start = get_date_period(date_start.strftime('%d'))
     _logger.debug(f'{period_start=}')
-    if not check_time_in_lighting_schedule(
-            lighting_schedule, month_start, period_start
-    ):
-        times_turn_on_off_light = get_times_turn_on_off_light()
-        write_lighting_schedule(
-            month_start, period_start, times_turn_on_off_light
-        )
-        lighting_schedule = read_lighting_schedule()
-    else:
-        times_turn_on_off_light = lighting_schedule[month_start][period_start]
-
+    times_turn_on_off_light, lighting_schedule = load_times_turn_on_off_light(
+        lighting_schedule, month_start, period_start
+    )
     _logger.info(f'Время включения и выключения '
-                 f'освешения: {times_turn_on_off_light}')
+                 f'освещения: {times_turn_on_off_light}')
 
     while True:
         try:
@@ -203,21 +200,15 @@ def main():
                 flag_light_on = False
 
             if period_start != period_now:
-                if not check_time_in_lighting_schedule(
-                        lighting_schedule, month_now, period_now
-                ):
-                    times_turn_on_off_light = get_times_turn_on_off_light()
-                    write_lighting_schedule(
-                        month_now, period_now, times_turn_on_off_light
-                    )
-                    lighting_schedule = read_lighting_schedule()
-                else:
-                    times_turn_on_off_light = lighting_schedule[month_now][
-                        period_now]
+                (
+                    times_turn_on_off_light, lighting_schedule
+                 ) = load_times_turn_on_off_light(
+                    lighting_schedule, month_now, period_now
+                )
                 period_start = period_now
                 _logger.debug(f'{period_start=}')
                 _logger.info(f'Время включения и выключения '
-                             f'освешения: {times_turn_on_off_light}')
+                             f'освещения: {times_turn_on_off_light}')
 
         except RequestAPISunriseSunsetError:
             _logger.error(f'Ошибка запроса к API.')
