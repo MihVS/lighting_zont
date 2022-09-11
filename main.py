@@ -112,13 +112,17 @@ def check_env_variable() -> bool:
     return all([TIMEZONE, LATITUDE, LONGITUDE])
 
 
-def get_date_period(date: str) -> str:
+def get_date_period(day: str) -> str:
     """Принимает номер дня месяца и возвращает период дней из графика"""
-    date = int(date)
-    for date_period in DATE_PERIODS:
-        period = date_period.split('-')
-        if date in [d for d in range(int(period[0]), int(period[1]) + 1)]:
+    for i in range(len(DATE_PERIODS)):
+        if int(day) in range(
+                DATE_PERIODS[i].starting_date,
+                DATE_PERIODS[i].finishing_date + 1
+        ):
+            date_period = (f'{DATE_PERIODS[i].starting_date}-' 
+                           f'{DATE_PERIODS[i].finishing_date}')
             return date_period
+    raise ValueError('День должен быть в диапазоне от 1 до 31')
 
 
 def check_time_in_lighting_schedule(
