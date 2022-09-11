@@ -11,7 +11,8 @@ from exceptions import (
     ENVError
 )
 from settings import (
-    _logger, TIMEZONE, LATITUDE, LONGITUDE, DATE_PERIODS, RETRY_TIME
+    _logger, TIMEZONE, LATITUDE, LONGITUDE, DATE_PERIODS, RETRY_TIME,
+    TIMEOFFSETON, TIMEOFFSETOFF
 )
 
 
@@ -26,6 +27,13 @@ def format_time(time_for_pars: str, time_zone: str) -> str:
     time_obj = time_obj.replace(tzinfo=utc_zone)
     time_obj = time_obj.astimezone(my_zone)
     return time_obj.strftime('%H:%M')
+
+
+def adds_time_offset(time_in: str, time_offset: str) -> str:
+    """Добавляет корректировку времени на заданное число минут"""
+    time_obj = datetime.strptime(time_in, '%H:%M')
+    delta = timedelta(minutes=int(time_offset))
+    return (time_obj + delta).strftime('%H:%M')
 
 
 def get_times_turn_on_off_light() -> Dict[str, str]:
@@ -62,8 +70,8 @@ def get_times_turn_on_off_light() -> Dict[str, str]:
     time_light_off = format_time(twilight_begin, TIMEZONE)
 
     times_turn_on_off_light = {
-        'light_on': time_light_on,
-        'light_off': time_light_off
+        'light_on': adds_time_offset(time_light_on, TIMEOFFSETON),
+        'light_off': adds_time_offset(time_light_off, TIMEOFFSETOFF)
     }
 
     return times_turn_on_off_light
