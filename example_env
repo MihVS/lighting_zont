@@ -1,0 +1,9 @@
+XZONTTOKEN='ExAmple3toKeN45zOnt12PrI22mER' # введите токен полученный с ресурса https://zont-online.ru/api/docs/
+XZONTCLIENT='test@test.com'
+DEVICEID=55264 # id контроллера
+OBJECTID=10345 # id управляемого выхода контроллера
+TIMEZONE=+3 # часовой пояс
+TIMEOFFSETON=-30 # сдвиг времени включения в минутах при скачивании значений
+TIMEOFFSETOFF=0 # сдвиг времени выключения в минутах при скачивании значений
+LATITUDE=58.6035661 # широта вашего населённого пункта
+LONGITUDE=49.6666241 # долгота вашего населённого пункта
