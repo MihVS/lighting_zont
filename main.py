@@ -15,6 +15,7 @@ from settings import (
     _logger, TIMEZONE, LATITUDE, LONGITUDE, DATE_PERIODS, RETRY_TIME,
     TIMEOFFSETON, TIMEOFFSETOFF
 )
+from zont import status_lighting
 
 
 def format_time(time_for_pars: str, time_zone: str) -> str:
@@ -163,7 +164,7 @@ def main():
         _logger.error(error)
         raise ENVError(error)
 
-    flag_light_on = False
+    flag_light_on = status_lighting()
 
     LightingControlTime = namedtuple('LightingControlTime',
                                      'light_on light_off')

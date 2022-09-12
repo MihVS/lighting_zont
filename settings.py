@@ -29,7 +29,11 @@ TIMEOFFSETOFF = os.getenv('TIMEOFFSETOFF')
 LATITUDE = os.getenv('LATITUDE')
 LONGITUDE = os.getenv('LONGITUDE')
 
-CONTENTTYPE = 'application/json'
+Command = namedtuple('Command', 'ON OFF')
+COMMAND = Command(ON=1, OFF=0)
 
 XZONTTOKEN = os.getenv('XZONTTOKEN')
 XZONTCLIENT = os.getenv('XZONTCLIENT')
+CONTENTTYPE = 'application/json'
+DEVICEID = int(os.getenv('DEVICEID'))
+OBJECTID = int(os.getenv('OBJECTID'))
