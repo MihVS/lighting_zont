@@ -9,13 +9,13 @@ import requests
 
 from exceptions import (
     FileReadingError, RequestAPISunriseSunsetError,
-    ENVError
+    ENVError, ResponseAPIZONTError
 )
 from settings import (
     _logger, TIMEZONE, LATITUDE, LONGITUDE, DATE_PERIODS, RETRY_TIME,
-    TIMEOFFSETON, TIMEOFFSETOFF
+    TIMEOFFSETON, TIMEOFFSETOFF, COMMAND
 )
-from zont import status_lighting
+from zont import status_lighting, switch_lighting
 
 
 def format_time(time_for_pars: str, time_zone: str) -> str:
@@ -200,12 +200,14 @@ def main():
             if not flag_light_on and is_time_in_interval(
                 time_now, *lighting_control_time
             ):
+                switch_lighting(COMMAND.ON)
                 _logger.warning(f'ОСВЕЩЕНИЕ ВКЛЮЧЕНО!!!!!')
                 flag_light_on = True
 
             if flag_light_on and not is_time_in_interval(
                     time_now, *lighting_control_time
             ):
+                switch_lighting(COMMAND.OFF)
                 _logger.warning(f'ОСВЕЩЕНИЕ ВЫКЛЮЧЕНО!!!!!')
                 flag_light_on = False
 
@@ -229,6 +231,9 @@ def main():
 
         except FileReadingError:
             _logger.error('Не удалось прочитать файл lighting_schedule.json')
+
+        except ResponseAPIZONTError:
+            _logger.error(f'Невозможно распаристь ответ, ошибка пути в json')
 
         except Exception as error:
             message = f'Сбой в работе программы: {error}'

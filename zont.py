@@ -58,8 +58,7 @@ def status_lighting():
         statuses_all = response.json()['devices'][0]['io']['z3k-state']
         status = statuses_all[str(OBJECTID)]['state']
         _logger.debug(f'Статус состояния выхода контроллера: {status}')
-    except (KeyError, IndexError) as e:
-        _logger.error(f'Невозможно распаристь ответ, ошибка - {e}')
+    except (KeyError, IndexError):
         raise ResponseAPIZONTError('Проверьте ответ от сервера zont')
 
     return bool(status)
