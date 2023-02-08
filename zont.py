@@ -55,7 +55,7 @@ def status_lighting():
 
     _check_response(response)
     try:
-        statuses_all = response.json()['devices'][0]['io']['z3k-state']
+        statuses_all = response.json()['devices'][3]['io']['z3k-state']
         status = statuses_all[str(OBJECTID)]['state']
         _logger.debug(f'Статус состояния выхода контроллера: {status}')
     except (KeyError, IndexError):
