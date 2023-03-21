@@ -49,7 +49,7 @@ def status_lighting():
     """Проверяет статус освещения True - вкл, False - выкл"""
 
     url = 'https://zont-online.ru/api/devices'
-    body = {'load_io': True}
+    body = {'load_io': True, 'device_ids': [DEVICEID]}
 
     response = requests.post(url=url, json=body, headers=HEADERS)
 
